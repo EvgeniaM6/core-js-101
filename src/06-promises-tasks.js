@@ -28,8 +28,17 @@
  *      .catch((error) => console.log(error.message)) // 'Error: Wrong parameter is passed!
  *                                                    //  Ask her again.';
  */
-function willYouMarryMe(/* isPositiveAnswer */) {
-  throw new Error('Not implemented');
+function willYouMarryMe(isPositiveAnswer) {
+  return new Promise((resolve) => {
+    if (typeof isPositiveAnswer !== 'boolean') {
+      throw new Error('Wrong parameter is passed! Ask her again.');
+    }
+    if (isPositiveAnswer) {
+      resolve('Hooray!!! She said "Yes"!');
+    } else {
+      resolve('Oh no, she said "No".');
+    }
+  });
 }
 
 
@@ -48,8 +57,8 @@ function willYouMarryMe(/* isPositiveAnswer */) {
  *    })
  *
  */
-function processAllPromises(/* array */) {
-  throw new Error('Not implemented');
+function processAllPromises(array) {
+  return Promise.all(array);
 }
 
 /**
@@ -71,8 +80,8 @@ function processAllPromises(/* array */) {
  *    })
  *
  */
-function getFastestPromise(/* array */) {
-  throw new Error('Not implemented');
+function getFastestPromise(array) {
+  return Promise.race(array);
 }
 
 /**
@@ -92,8 +101,20 @@ function getFastestPromise(/* array */) {
  *    });
  *
  */
-function chainPromises(/* array, action */) {
-  throw new Error('Not implemented');
+function chainPromises(array, action) {
+  return new Promise((resolve) => {
+    const resultsArr = [];
+    let mainArrLeng = array.length;
+    array.forEach((prom) => {
+      prom.then((res) => {
+        resultsArr.push(res);
+        if (mainArrLeng === resultsArr.length) resolve(resultsArr.reduce(action));
+      }).catch(() => {
+        mainArrLeng -= 1;
+        if (mainArrLeng === resultsArr.length) resolve(resultsArr.reduce(action));
+      });
+    });
+  });
 }
 
 module.exports = {

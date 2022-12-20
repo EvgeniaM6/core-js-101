@@ -20,8 +20,14 @@
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  return {
+    width,
+    height,
+    getArea() {
+      return this.width * this.height;
+    },
+  };
 }
 
 
@@ -35,8 +41,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { width: 10, height : 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 
@@ -51,8 +57,8 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  return Object.create(proto, Object.getOwnPropertyDescriptors(JSON.parse(json)));
 }
 
 
@@ -111,32 +117,120 @@ function fromJSON(/* proto, json */) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    if (this.main) {
+      const arrNotEl = ['.', '#', ':', '['];
+      const isNotEl = this.main.every((str) => arrNotEl.includes(str[0]));
+      if (!isNotEl) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      } else {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, value] : [value];
+    return newObj;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    if (this.main) {
+      const arrNotEl = ['#'];
+      const isId = this.main.some((str) => arrNotEl.includes(str[0]));
+      if (isId) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      }
+      const arrNotEl2 = ['.', ':', '['];
+      const notInOreder = this.main.some((str) => arrNotEl2.includes(str[0]));
+      if (notInOreder) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
+    const newVal = `#${value}`;
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, newVal] : [newVal];
+    return newObj;
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    if (this.main) {
+      const arrNotEl2 = [':', '['];
+      const notInOreder = this.main.some((str) => arrNotEl2.includes(str[0]));
+      if (notInOreder) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
+    const newVal = `.${value}`;
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, newVal] : [newVal];
+    return newObj;
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    if (this.main) {
+      const arrNotEl2 = [':'];
+      const notInOreder = this.main.some((str) => arrNotEl2.includes(str[0]));
+      if (notInOreder) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
+    const newVal = `[${value}]`;
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, newVal] : [newVal];
+    return newObj;
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    if (this.main) {
+      const arrNotEl2 = ['::'];
+      const notInOreder = this.main.some((str) => arrNotEl2.includes(str.slice(0, 2)));
+      if (notInOreder) {
+        throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+      }
+    }
+    const newVal = `:${value}`;
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, newVal] : [newVal];
+    return newObj;
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    if (this.main) {
+      const arrNotEl = ['::'];
+      const isId = this.main.some((str) => arrNotEl.includes(str.slice(0, 2)));
+      if (isId) {
+        throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+      }
+    }
+    const newVal = `::${value}`;
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = this.main ? [...this.main, newVal] : [newVal];
+    return newObj;
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    const newMain = {
+      selector1,
+      combinator,
+      selector2,
+    };
+    const newObj = Object.create({ __proto__: this });
+    newObj.main = newMain;
+    return newObj;
+  },
+
+  stringify() {
+    function createStr(valueMain) {
+      let res;
+      if (Array.isArray(valueMain)) {
+        res = valueMain.join('');
+      } else {
+        res = `${createStr(valueMain.selector1.main)} ${valueMain.combinator} ${createStr(valueMain.selector2.main)}`;
+      }
+      return res;
+    }
+    let result = '';
+    result = createStr(this.main);
+    return result;
   },
 };
 
